@@ -1,0 +1,10 @@
+node_modules
+yarn-error.log
+src/bundle.js
+build
+*.rar
+.cache
+stats.json
+
+# ignore MacOS Folder attr file
+.DS_Store
