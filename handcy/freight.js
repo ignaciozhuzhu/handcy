@@ -17,55 +17,37 @@ const month = 6
 const date1 = `2018-${prevMonth(month)}-10`
 var bg = `2018-${nextMonth(date1)}-01`
 var end = `2018-${nextMonth(bg)}-01`
-var totalAmount = 0
-var totalQuant = 0
 var totalArr = []
-const len = 7
+var total_page = 0
+const len = 4
+  //var month6orderid = require('./data6')
 
 function getlist(i) {
-  client.execute('aliexpress.trade.seller.orderlist.get', {
-      'param_aeop_order_query': {
-        current_page: i, //1开始
-        page_size: 50, //上限是50
-        create_date_start: `${date1} 00:00:00`,
-        create_date_end: `${end} 00:00:00`,
-        order_status_list: ['WAIT_SELLER_SEND_GOODS', 'SELLER_PART_SEND_GOODS', 'WAIT_BUYER_ACCEPT_GOODS', 'IN_ISSUE', 'WAIT_SELLER_EXAMINE_MONEY', 'RISK_CONTROL', 'FINISH', 'FUND_PROCESSING']
-          //order_status: []
-      },
+  client.execute('aliexpress.logistics.redefining.getonlinelogisticsinfo', {
+      current_page: i, //1开始
+      page_size: 50, //上限是50
+      gmt_create_start_str: `${bg} 00:00:00`,
+      gmt_create_end_str: `${end} 00:00:00`,
       'session': '50002900f28CaWoqa8alzlMPcRofAhBsiqzVjhHR1382dda5G3mwVIkaGghTneF6J01',
     },
     function (error, response) {
+     //  console.log(JSON.stringify(response))
+      // console.log('\n')
       if (!error) {
-        if (response.result.target_list) {
-          var arr = response.result.target_list.aeop_order_item_dto
-          totalArr.push(arr)
-            //筛选逻辑:当月-10天前下单,当月已付款,付款成功, 且买家未取消订单.
-          arr = arr.filter(function (e) {
-            return e.fund_status == 'PAY_SUCCESS' &&
-              e.gmt_pay_time >= bg &&
-              e.gmt_pay_time < end &&
-              e.end_reason !== 'buyer_cancel_order'
-          })
-
-          //这个数组用于只保留各订单金额
-          var amountArr = pushAmount(arr)
-          if (amountArr.length) {
-            totalAmount += amountArr.length
-            totalQuant += getSum(amountArr)
-              //console.log(`当前是第${i}页...`)
-              //console.log(`arr`, JSON.stringify(response))
+        total_page = response.total_page - 1
+          //console.log(total_page, i)
+        if (response.result_list.result) {
+          var arr = response.result_list.result
+          for (let i = 0; i < arr.length; i++) {
+            if(arr[i].logistics_fee.cent>0)
+            totalArr.push({ order_id: arr[i].order_id, amount: arr[i].logistics_fee.cent,online_logistics_id:arr[i].online_logistics_id })
           }
-          //console.log(`len的长度不够`)
-        } else {
-          if (i == len - 1) {
+          //console.log(`len的长度不够`, i)
+          if (i == total_page) {
             console.log(`当前时间:`, new Date().toLocaleString())
-            console.log(`${month}月汇总金额:`, totalQuant.toFixed(2))
-            console.log(`${month}月订单量:`, totalAmount, '\n')
-              //console.log(`总数组`, JSON.stringify(totalArr))
+            console.log(`总数组`, JSON.stringify(totalArr))
           }
         }
-        //console.log(JSON.stringify(response));
-        //console.log(JSON.stringify(arr));
       } else
         console.log(error);
     }

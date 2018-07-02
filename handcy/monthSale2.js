@@ -35,17 +35,21 @@ function getlist(i) {
       'session': '50002900f28CaWoqa8alzlMPcRofAhBsiqzVjhHR1382dda5G3mwVIkaGghTneF6J01',
     },
     function (error, response) {
+      console.log(JSON.stringify(response))
+   //   console.log('\n')
       if (!error) {
         if (response.result.target_list) {
           var arr = response.result.target_list.aeop_order_item_dto
-          totalArr.push(arr)
             //筛选逻辑:当月-10天前下单,当月已付款,付款成功, 且买家未取消订单.
           arr = arr.filter(function (e) {
             return e.fund_status == 'PAY_SUCCESS' &&
-              e.gmt_pay_time >= bg &&
+              e.gmt_pay_time >= date1 &&
               e.gmt_pay_time < end &&
               e.end_reason !== 'buyer_cancel_order'
           })
+          for (let i = 0; i < arr.length; i++) {
+            totalArr.push({ order_id: arr[i].order_id })
+          }
 
           //这个数组用于只保留各订单金额
           var amountArr = pushAmount(arr)
@@ -53,15 +57,15 @@ function getlist(i) {
             totalAmount += amountArr.length
             totalQuant += getSum(amountArr)
               //console.log(`当前是第${i}页...`)
-              //console.log(`arr`, JSON.stringify(response))
+              // console.log(`arr`, JSON.stringify(response))
           }
-          //console.log(`len的长度不够`)
+          //console.log(`len的长度不够`, i)
         } else {
           if (i == len - 1) {
             console.log(`当前时间:`, new Date().toLocaleString())
             console.log(`${month}月汇总金额:`, totalQuant.toFixed(2))
             console.log(`${month}月订单量:`, totalAmount, '\n')
-              //console.log(`总数组`, JSON.stringify(totalArr))
+            console.log(`总数组`, JSON.stringify(totalArr))
           }
         }
         //console.log(JSON.stringify(response));
